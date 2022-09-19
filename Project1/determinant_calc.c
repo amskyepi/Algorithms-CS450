@@ -5,8 +5,7 @@
  * int size: Dimensions of desired square matrix.
  * return: 2D array structure for square matrix.
  */
-double **create_matrix(int size)
-{
+double **create_matrix(int size){
 	double **matrix = (double **)malloc(size * sizeof(double *));
 	for (int i = 0; i < size; i++)
 		matrix[i] = (double *)malloc(size * sizeof(double));
@@ -18,8 +17,7 @@ double **create_matrix(int size)
  * double **mat: Matrix to be freed.
  * return: Nothing.
  */
-void free_matrix(int size, double **matrix)
-{
+void free_matrix(int size, double **matrix){
 	for (int i = 0; i < size; i++)
 		free(matrix[i]);
 	free(matrix);
@@ -30,13 +28,10 @@ void free_matrix(int size, double **matrix)
  * double **mat: Contents of matrix passed from stdin.
  * return: Nothing.
  */
-void print_matrix(int size, double **mat)
-{
+void print_matrix(int size, double **mat){
 	printf("Elements:\n");
-	for (int row = 0; row < size; row++)
-	{
-		for (int col = 0; col < size; col++)
-		{
+	for (int row = 0; row < size; row++){
+		for (int col = 0; col < size; col++){
 			printf("%lf ", mat[row][col]);
 		}
 		printf("\n");
@@ -51,11 +46,9 @@ void print_matrix(int size, double **mat)
  * int row2: Row which will be swapped with row1.
  * return: -1, scalar used to flip the sign of the determinant after each swap.
  */
-int swap_rows(int size, double **mat, int row1, int row2)
-{
+int swap_rows(int size, double **mat, int row1, int row2){
 	double temp_mat[size]; /* store row1 here */
-	for (int col = 0; col < size; col++)
-	{
+	for (int col = 0; col < size; col++){
 		temp_mat[col] = mat[row1][col];
 		mat[row1][col] = mat[row2][col];
 		mat[row2][col] = temp_mat[col];
@@ -78,14 +71,10 @@ double calc_determinant(int size, double **mat)
 
 	/* Check if diagonal elements are all nonzero
 	 * If not, then swap with a row from below in the matrix */
-	for (int i = 0; i < size; i++)
-	{
-		if (mat[i][i] == 0)
-		{
-			for (int row = i + 1; row < size; row++)
-			{
-				if (mat[row][i] != 0)
-				{
+	for (int i = 0; i < size; i++){
+		if (mat[i][i] == 0){
+			for (int row = i + 1; row < size; row++){
+				if (mat[row][i] != 0){
 					det_scalar *= swap_rows(size, mat, row, i);
 					break;
 				}
@@ -98,11 +87,9 @@ double calc_determinant(int size, double **mat)
 		if (determinant == 0)
 			break;
 		/* Transform into upper triangluar matrix */
-		for (int j = i + 1; j < size; j++)
-		{
+		for (int j = i + 1; j < size; j++){
 			to_add = mat[j][i] / mat[i][i];
-			for (int k = 0; k < size; k++)
-			{
+			for (int k = 0; k < size; k++){
 				mat[j][k] = mat[j][k] - to_add * mat[i][k];
 			}
 		}
@@ -120,13 +107,11 @@ double calc_determinant(int size, double **mat)
  * double element: Placeholder for each element of the matrix.
  * return: 0 on success, -1 on failure.
  */
-int main()
-{
+int main(){
 	int mat_size = 0;
 	/* Read matrix dimensions */
 	scanf("%d", &mat_size);
-	if (mat_size < 1)
-	{
+	if (mat_size < 1){
 		printf("Matrix must have dimensions greater than 0.");
 		return (-1);
 	}
@@ -135,12 +120,9 @@ int main()
 
 	/* Ingest contents of matrix from stdin */
 	double element = 0;
-	for (int row = 0; row < mat_size; row++)
-	{
-		for (int col = 0; col < mat_size; col++)
-		{
-			if (scanf("%lf", &element) == 1)
-			{
+	for (int row = 0; row < mat_size; row++){
+		for (int col = 0; col < mat_size; col++){
+			if (scanf("%lf", &element) == 1){
 				mat_array[row][col] = element;
 			}
 		}
