@@ -64,8 +64,7 @@ int swap_rows(int size, double **mat, int row1, int row2){
  * double determinant: Resulting determinant of specified matrix.
  * return: determinant.
  */
-double calc_determinant(int size, double **mat)
-{
+double calc_determinant(int size, double **mat){
 	int det_scalar = 1;
 	double to_add = 0, determinant = 1;
 
@@ -80,7 +79,7 @@ double calc_determinant(int size, double **mat)
 				}
 			}
 			if (mat[i][i] == 0)
-				determinant = 0;
+				determinant = det_scalar = 0;
 		}
 		/* If any diagonal elements are zero at this point,
 		 * do not continue, the determinant is zero */
