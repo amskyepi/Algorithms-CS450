@@ -88,9 +88,8 @@ double calc_determinant(int size, double **mat){
 		/* Transform into upper triangluar matrix */
 		for (int j = i + 1; j < size; j++){
 			to_add = mat[j][i] / mat[i][i];
-			for (int k = 0; k < size; k++){
+			for (int k = 0; k < size; k++)
 				mat[j][k] = mat[j][k] - to_add * mat[i][k];
-			}
 		}
 	}
 	/* Multiply all elements on diagonal for determinant */
@@ -119,13 +118,10 @@ int main(){
 
 	/* Ingest contents of matrix from stdin */
 	double element = 0;
-	for (int row = 0; row < mat_size; row++){
-		for (int col = 0; col < mat_size; col++){
-			if (scanf("%lf", &element) == 1){
+	for (int row = 0; row < mat_size; row++)
+		for (int col = 0; col < mat_size; col++)
+			if (scanf("%lf", &element) == 1)
 				mat_array[row][col] = element;
-			}
-		}
-	}
 
 	/* Calculate determinant, print to stdout, then free allocated memory */
 	printf("%lf\n", calc_determinant(mat_size, mat_array));
