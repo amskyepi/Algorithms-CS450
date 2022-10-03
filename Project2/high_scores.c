@@ -5,32 +5,6 @@
 
 #define num_players 1000000
 
-/* Purpose: Creates a 2D table to hold player data.
- *
- * int size: Number of rows in table.
- * return: 2D int array structure for player data.
- * Will have 6 columns, and `size` rows.
- */
-
-int **create_table(int size){
-	int **table = (int **)malloc(6 * sizeof(int *));
-	for (int i = 0; i < size; i++)
-		table[i] = (int *)malloc(size * sizeof(int));
-	return (table);
-}
-
-/* Purpose: Frees memory previously allocated for 2D int array.
- *
- * int size: Length of 2D array.
- * int **table: Table to be freed.
- * return: Nothing.
- */
-void free_table(int size, int **table){
-	for (int i = 0; i < size; i++)
-		free(table[i]);
-	free(table);
-}
-
 /* Purpose: Used to enable qsort() function.
  *
  * Using code from: https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm
@@ -149,11 +123,12 @@ int main(int argc, char **argv){
         "TOTAL_XP"};
 
         /* score_array[i] corresponds to list_names[i] */
-        static int score_arrays[6][num_players]; // = create_table(num_players);
+        static int score_arrays[6][num_players];
 
         /* Ingest player scores into corrosponding arrays */
         for (int i = 0; i < num_players; i++)
-            scanf("%d %d %d %d %d", &score_arrays[0][i],
+            scanf("%d %d %d %d %d", 
+            &score_arrays[0][i],
             &score_arrays[1][i],
             &score_arrays[2][i],
             &score_arrays[3][i],
