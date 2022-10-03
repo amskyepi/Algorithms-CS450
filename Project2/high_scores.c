@@ -3,28 +3,67 @@
 #include<time.h>
 #include<string.h>
 
-#define num_players 100
+#define num_players 1000000
 
+/* Purpose: Creates a 2D table to hold player data.
+ *
+ * int size: Number of rows in table.
+ * return: 2D int array structure for player data.
+ * Will have 6 columns, and `size` rows.
+ */
+
+int **create_table(int size){
+	int **table = (int **)malloc(6 * sizeof(int *));
+	for (int i = 0; i < size; i++)
+		table[i] = (int *)malloc(size * sizeof(int));
+	return (table);
+}
+
+/* Purpose: Frees memory previously allocated for 2D int array.
+ *
+ * int size: Length of 2D array.
+ * int **table: Table to be freed.
+ * return: Nothing.
+ */
+void free_table(int size, int **table){
+	for (int i = 0; i < size; i++)
+		free(table[i]);
+	free(table);
+}
+
+/* Purpose: Used to enable qsort() function.
+ *
+ * Using code from: https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm
+ */
 int cmpfunc (const void * a, const void * b){
    return ( *(int*)b - *(int*)a );
 }
 
-void custom_sort(int array[]) {
+/* Purpose: Sorting algorithm using a combination of counting sort and qsort().
+ *
+ * int* array: Data to be sorted.
+ * return: Nothing. But upon using this function, the data in `array` will be sorted in descending order.
+ */
+void custom_sort(int* array) {
     int count[10000] = {0};
-    int array_size = 0;
+    int l_array_size = 0;
 
     /* Find number of elements within range (0,9999) */
     for (int i = 0; i < num_players; i++){
         if (array[i] < 10000)
-            array_size++;
+            l_array_size++;
     }
 
     /* Initialize new arrays */
-    int less_array[array_size];
-    int greater_array[num_players - array_size];
-    int l_element = 0, g_element = 0;
+    int g_array_size = num_players - l_array_size,
+        l_element = 0, 
+        g_element = 0;
 
-    /* Store elements less than 10000 in new array */
+    int less_array[l_array_size],
+        greater_array[g_array_size];
+
+    /* Store elements less than 10000 in one array, 
+     * Store others in another array. */
     for (int i = 0; i < num_players; i++){
         if (array[i] < 10000){
             less_array[l_element] = array[i];
@@ -37,10 +76,10 @@ void custom_sort(int array[]) {
     }
 
     /* Sort values greater than 9999 */
-    qsort(greater_array, num_players - array_size, sizeof(int), cmpfunc);
+    qsort(greater_array, g_array_size, sizeof(int), cmpfunc);
 
     /* Store the count of each element */
-    for (int i = 0; i < array_size; i++)
+    for (int i = 0; i < l_array_size; i++)
         count[less_array[i]]++;
 
     /* Use count array to replace values in less_array */
@@ -52,21 +91,26 @@ void custom_sort(int array[]) {
         }
     }
 
-    l_element = 0;
-    g_element = 0;
-
     /* Copy the sorted elements into original array */
-    for (int i = num_players - 1; i >= 0; i--){
-        while(l_element < array_size){
-            array[i] = less_array[l_element++];
-        }
-        while(l_element < (num_players - array_size)){
-            array[i] = greater_array[g_element++];
-        }
+    int i = 0;
+    l_element = 0,
+    g_element = 0;
+    for (i; i < g_array_size; i++){
+        array[i] = greater_array[g_element++];
     }
+    for (i; i < num_players; i++){
+        array[i] = less_array[l_element++];
+    }    
 }
 
-double to_sort(int score_array[], char *score_list_name, int sort_alg_type){
+/* Purpose: Enables the specified sorting algorithm, times it, and prints the sorted output.
+ *
+ * int* score_array: Data to be sorted and timed.
+ * char* score_list_name: The name associated with the specified score_array.
+ * int sort_alg_type: Indicates whether we use standard or custom sorting algorithm.
+ * return: The number of ms it took to sort the specified data.
+ */
+double to_sort(int* score_array, char* score_list_name, int sort_alg_type){
     clock_t start, end;
     double cpu_time;
     printf("%s\n", score_list_name);
@@ -78,12 +122,23 @@ double to_sort(int score_array[], char *score_list_name, int sort_alg_type){
     else
         custom_sort(score_array);
     end = clock();
-    for (int i = 0; i < num_players; i++)
-            printf("%d\n", score_array[i]);
+    /*for (int i = 0; i < num_players; i++)
+            printf("%d\n", score_array[i]);*/
     cpu_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
     printf("\ntime taken: %lf\n\n", cpu_time);
     return (cpu_time);
 }
+
+/* Purpose: Ingests data from stdin and allocates it to a specified array for sorting.
+ * The main purpose of the program is to take in 5 columns of player data, create an array
+ * containing the total_xp for each player, and sort a total of 6 arrays of data. The user
+ * specifies `standard` or `custom` upon executing the program in the terminal.
+ * 
+ * int argc: Number of command line arguments provided upon execution.
+ * char **argv: Char arrays containing command line arguments.
+ * return: If 0, program executes successfully. If -1, the user did not specify either 
+ * `standard` or `custom`.
+ */
 int main(int argc, char **argv){
     if (argc == 2){
         char* list_names[6] = 
@@ -95,7 +150,7 @@ int main(int argc, char **argv){
         "TOTAL_XP"};
 
         /* score_array[i] corresponds to list_names[i] */
-        static int score_arrays[6][num_players];
+        static int score_arrays[6][num_players]; // = create_table(num_players);
 
         /* Ingest player scores into corrosponding arrays */
         for (int i = 0; i < num_players; i++)
@@ -118,31 +173,22 @@ int main(int argc, char **argv){
         int sort_alg_type; /* 0 = custom, 1 = standard */
         double cpu_time, sum_cpu_time = 0;
 
-        /* Time to sort! */
+        /* Set sorting algorithm to be used */
         if (!strcmp(argv[1], "standard")) 
             sort_alg_type = 1;
         if (!strcmp(argv[1], "custom"))
             sort_alg_type = 0;
 
-        for (int i = 0; i < 5; i++){
+        /* Sort all arrays */
+        for (int i = 0; i < 6; i++){
             cpu_time = to_sort(score_arrays[i], list_names[i], sort_alg_type);
             sum_cpu_time += cpu_time;
         }
         printf("total time taken: %lf\n", sum_cpu_time);
-
-        /*printf("Standard ");
-        clock_t start = clock();
-        qsort(score_arrays[0], num_players, sizeof(int), cmpfunc);
-        clock_t end = clock();
-        printf("took %lf ms\n", (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000);
-        printf("Custom ");
-        start = clock();
-        custom_sort(score_arrays[0]);
-        end = clock();
-        printf("took %lf ms\n", (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000);*/
     }
-    else
+    else{
         printf("Please specify either 'standard' or 'custom' sorting upon execution.\n");
-
+        return (-1);
+    }
     return 0;
 }
