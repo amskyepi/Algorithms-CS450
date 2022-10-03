@@ -92,13 +92,12 @@ void custom_sort(int* array) {
     }
 
     /* Copy the sorted elements into original array */
-    int i = 0;
     l_element = 0,
     g_element = 0;
-    for (i; i < g_array_size; i++){
+    for (int i = 0; i < num_players; i++){
+        if ( i < g_array_size)
         array[i] = greater_array[g_element++];
-    }
-    for (i; i < num_players; i++){
+        else
         array[i] = less_array[l_element++];
     }    
 }
@@ -122,8 +121,10 @@ double to_sort(int* score_array, char* score_list_name, int sort_alg_type){
     else
         custom_sort(score_array);
     end = clock();
-    /*for (int i = 0; i < num_players; i++)
-            printf("%d\n", score_array[i]);*/
+    /* Print sorted output */
+    for (int i = 0; i < num_players; i++)
+            printf("%d\n", score_array[i]);
+
     cpu_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
     printf("\ntime taken: %lf\n\n", cpu_time);
     return (cpu_time);
