@@ -106,26 +106,24 @@ void custom_sort(int* array) {
  *
  * int* score_array: Data to be sorted and timed.
  * char* score_list_name: The name associated with the specified score_array.
- * int sort_alg_type: Indicates whether we use standard or custom sorting algorithm.
+ * int sort_alg_type: Indicates whether we use standard (1) or custom (0) sorting algorithm.
  * return: The number of ms it took to sort the specified data.
  */
 double to_sort(int* score_array, char* score_list_name, int sort_alg_type){
-    clock_t start, end;
-    double cpu_time;
     printf("%s\n", score_list_name);
 
-    start = clock();
-    if (sort_alg_type == 1){
+    clock_t start = clock();
+    if (sort_alg_type == 1)
         qsort(score_array, num_players, sizeof(int), cmpfunc);
-    }
     else
         custom_sort(score_array);
-    end = clock();
+    clock_t end = clock();
+
     /* Print sorted output */
     for (int i = 0; i < num_players; i++)
             printf("%d\n", score_array[i]);
 
-    cpu_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
+    double cpu_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
     printf("\ntime taken: %lf\n\n", cpu_time);
     return (cpu_time);
 }
