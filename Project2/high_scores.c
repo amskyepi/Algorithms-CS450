@@ -146,7 +146,7 @@ double to_sort(int* score_array, char* score_list_name, int sort_alg_type, int l
         printf("%d\n", score_array[i]);
 
     double cpu_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
-    printf("\ntime taken: %lf\n\n", cpu_time);
+    printf("time taken: %lf\n\n", cpu_time);
     return (cpu_time);
 }
 
@@ -209,7 +209,7 @@ int main(int argc, char **argv){
             cpu_time = to_sort(score_arrays[i], list_names[i], sort_alg_type, line_count);
             sum_cpu_time += cpu_time;
         }
-        printf("total time taken: %lf\n", sum_cpu_time);
+        printf("total time taken: %lf", sum_cpu_time);
     }
     else{
         printf("Please specify either 'standard' or 'custom' sorting upon execution.\n");
