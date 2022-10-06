@@ -3,11 +3,59 @@
 #include<time.h>
 #include<string.h>
 
-#define num_players 1000000
+#define num_players 1100000
+
+/* Purpose: Simple swap function. Swaps specified values.
+ *
+ * int* a: First element to be swapped.
+ * int* b: Second element to be swapped. a will swap with b.
+ * return: Nothing, but function will swap specified elements.
+ */
+void swap(int* a, int* b){
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+    return;
+}
+
+/* Purpose: Partitioning scheme for quickSort. Performs swaps to sort array in
+ * descending order.
+ *
+ * int* array: Data to be sorted.
+ * int low: Low index of passed array.
+ * int high: High index of passed array.
+ * return: Nothing, but function will work with quicksort to swap values in
+ * array until fully sorted in descending order.
+ */
+int partition(int* array, int low, int high){
+    int low_index = low - 1;  
+    for (int i = low; i < high; i++){
+        if (array[i] > array[high]){
+            low_index++; 
+            swap(&array[low_index],&array[i]);
+        }
+    }
+    low_index++;
+    swap(&array[low_index], &array[high]);
+    return (low_index);
+}
+
+/* Purpose: Quicksort algorithm to sort scores > 9999.
+ *
+ * int* array: Data to be sorted.
+ * int low: Low index of passed array.
+ * int high: High index of passed array.
+ * return: Nothing, but function will recursively sort the array initially passed to it.
+ */
+void quickSort(int* array, int low, int high){
+    if (low < high){
+        int p_index = partition(array, low, high);
+        quickSort(array, low, p_index - 1);
+        quickSort(array, p_index + 1, high);
+    }
+}
 
 /* Purpose: Used to enable qsort() function.
- *
- * Using code from: https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm
  */
 int cmpfunc (const void * a, const void * b){
    return ( *(int*)b - *(int*)a );
@@ -18,18 +66,18 @@ int cmpfunc (const void * a, const void * b){
  * int* array: Data to be sorted.
  * return: Nothing. But upon using this function, the data in `array` will be sorted in descending order.
  */
-void custom_sort(int* array) {
+void custom_sort(int* array, int line_count) {
     int count[10000] = {0};
     int l_array_size = 0;
 
     /* Find number of elements within range (0,9999) */
-    for (int i = 0; i < num_players; i++){
+    for (int i = 0; i < line_count; i++){
         if (array[i] < 10000)
             l_array_size++;
     }
 
     /* Initialize new arrays */
-    int g_array_size = num_players - l_array_size,
+    int g_array_size = line_count - l_array_size,
         l_element = 0, 
         g_element = 0;
 
@@ -38,7 +86,7 @@ void custom_sort(int* array) {
 
     /* Store elements less than 10000 in one array, 
      * Store others in another array. */
-    for (int i = 0; i < num_players; i++){
+    for (int i = 0; i < line_count; i++){
         if (array[i] < 10000){
             less_array[l_element] = array[i];
             l_element++;
@@ -50,7 +98,7 @@ void custom_sort(int* array) {
     }
 
     /* Sort values greater than 9999 */
-    qsort(greater_array, g_array_size, sizeof(int), cmpfunc);
+    quickSort(greater_array, 0, g_array_size - 1);
 
     /* Store the count of each element */
     for (int i = 0; i < l_array_size; i++)
@@ -68,11 +116,11 @@ void custom_sort(int* array) {
     /* Copy the sorted elements into original array */
     l_element = 0,
     g_element = 0;
-    for (int i = 0; i < num_players; i++){
+    for (int i = 0; i < line_count; i++){
         if ( i < g_array_size)
-        array[i] = greater_array[g_element++];
+            array[i] = greater_array[g_element++];
         else
-        array[i] = less_array[l_element++];
+            array[i] = less_array[l_element++];
     }    
 }
 
@@ -83,19 +131,19 @@ void custom_sort(int* array) {
  * int sort_alg_type: Indicates whether we use standard (1) or custom (0) sorting algorithm.
  * return: The number of ms it took to sort the specified data.
  */
-double to_sort(int* score_array, char* score_list_name, int sort_alg_type){
+double to_sort(int* score_array, char* score_list_name, int sort_alg_type, int line_count){
     printf("%s\n", score_list_name);
 
     clock_t start = clock();
     if (sort_alg_type == 1)
-        qsort(score_array, num_players, sizeof(int), cmpfunc);
+        qsort(score_array, line_count, sizeof(int), cmpfunc);
     else
-        custom_sort(score_array);
+        custom_sort(score_array, line_count);
     clock_t end = clock();
 
     /* Print sorted output */
-    for (int i = 0; i < num_players; i++)
-            printf("%d\n", score_array[i]);
+    for (int i = 0; i < line_count; i++)
+        printf("%d\n", score_array[i]);
 
     double cpu_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
     printf("\ntime taken: %lf\n\n", cpu_time);
@@ -124,18 +172,21 @@ int main(int argc, char **argv){
 
         /* score_array[i] corresponds to list_names[i] */
         static int score_arrays[6][num_players];
+        int line_count = 0;
 
         /* Ingest player scores into corrosponding arrays */
-        for (int i = 0; i < num_players; i++)
-            scanf("%d %d %d %d %d", 
+        for (int i = 0; i < num_players; i++){
+            if(scanf("%d %d %d %d %d", 
             &score_arrays[0][i],
             &score_arrays[1][i],
             &score_arrays[2][i],
             &score_arrays[3][i],
-            &score_arrays[4][i]);
-
-        /* Calculate Total_XP */
-        for (int i = 0; i < num_players; i++){
+            &score_arrays[4][i]) == 5){
+            line_count++;
+            }
+        }      
+        
+        for (int i = 0; i < line_count; i++){
             score_arrays[5][i] = 
             score_arrays[0][i] +
             score_arrays[1][i] +
@@ -155,7 +206,7 @@ int main(int argc, char **argv){
 
         /* Sort all arrays */
         for (int i = 0; i < 6; i++){
-            cpu_time = to_sort(score_arrays[i], list_names[i], sort_alg_type);
+            cpu_time = to_sort(score_arrays[i], list_names[i], sort_alg_type, line_count);
             sum_cpu_time += cpu_time;
         }
         printf("total time taken: %lf\n", sum_cpu_time);
