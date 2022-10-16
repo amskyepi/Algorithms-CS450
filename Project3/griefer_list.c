@@ -58,6 +58,34 @@ AVL_NODE* successor_node(AVL_NODE* node){
     return (current);
 }
 
+/* Purpose: Make a left rotation on subtree 
+ * AVL_NODE* a: root of subtree
+ * Return: new root of rotated subtree */
+AVL_NODE* rotate_left(AVL_NODE* a){
+    AVL_NODE* b = a->right; /* a's current right child will become a's parent */
+    AVL_NODE* c = b->left; /* b's right child */
+    b->left = a; /* a becomes child of b */
+    a->right = c; /* c becomes child of a */
+    a->height = max(height(a->left), height(a->right)) + 1;
+    b->height = max(height(b->left), height(b->right)) + 1;
+
+    return (b); /* b is new root */    
+}
+
+/* Purpose: Make a right rotation on subtree 
+ * AVL_NODE* c: root of subtree
+ * Return: new root of rotated subtree */
+AVL_NODE* rotate_right(AVL_NODE* c){
+    AVL_NODE* b = c->left; /* b becomes parent of c */
+    AVL_NODE* a = b->right; 
+    b->right = c; /* c becomes child of b */
+    c->left = a; /* a becomes child of c */
+    c->height = max(height(c->left), height(c->right)) + 1;
+    b->height = max(height(b->left), height(b->right)) + 1;
+
+    return (b); /* b is new root */    
+}
+
 /* Purpose: Ingests and assigns data from stdin to the tree type specified at command line.
  * The user will specify `avl` or `scapegoat` upon executing the program in the terminal.
  * 
