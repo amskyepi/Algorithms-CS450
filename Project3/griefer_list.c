@@ -65,7 +65,7 @@ AVL_NODE* rotate_left(AVL_NODE* a){
     AVL_NODE* b = a->right; /* a's current right child will become a's parent */
     AVL_NODE* c = b->left; /* b's right child */
     b->left = a; /* a becomes child of b */
-    a->right = c; /* c becomes child of a */
+    a->right = c; /* c becomes right child of a */
     a->height = max(height(a->left), height(a->right)) + 1;
     b->height = max(height(b->left), height(b->right)) + 1;
 
@@ -78,12 +78,68 @@ AVL_NODE* rotate_left(AVL_NODE* a){
 AVL_NODE* rotate_right(AVL_NODE* c){
     AVL_NODE* b = c->left; /* b becomes parent of c */
     AVL_NODE* a = b->right; 
-    b->right = c; /* c becomes child of b */
+    b->right = c; /* c becomes right child of b */
     c->left = a; /* a becomes child of c */
     c->height = max(height(c->left), height(c->right)) + 1;
     b->height = max(height(b->left), height(b->right)) + 1;
 
     return (b); /* b is new root */    
+}
+
+/* Purpose: Insert node to AVL tree 
+ * AVL_NODE* node: Root of tree/subtree
+ * int key: Unique identifier of new node
+ * Return: Updated tree with newly inserted node */
+AVL_NODE* insert(AVL_NODE* node, int key){
+    /* If tree/subtree is empty */
+    if (node == NULL)
+        return(create_new_node(key));
+    /* If key is less than root */
+    if(key < node->key)
+        node->left = insert(node->left, key);
+    /* If key is greater than root */
+    else if(key > node->key)
+        node->right = insert(node->right, key);
+    else  
+        return (node);
+
+    /* Get height of tree and check balance */
+    node->height = max(height(node->left), height(node->right)) + 1;
+    int node_balance = balance(node);
+
+    /* Rebalance left side of tree */
+    if (node_balance > 1){
+        if (key < node->left->key)
+            return (rotate_right(node));
+        if (key > node->left->key){
+            node->left = rotate_left(node->left);
+            return (rotate_right(node));
+        }
+    }
+
+    /* Rebalance right side of tree */
+    if (node_balance < -1){
+        if (key > node->right->key)
+            return (rotate_left(node));
+        if (key < node->right->key){
+            node->right = rotate_right(node);
+            return (rotate_left(node));
+        }
+    }
+    return (node);
+}
+
+/* Purpose: Print AVL tree in order 
+ * AVL_NODE* root: Root of tree/subtree
+ * Return: Nothing, but will print tree contents and free nodes */
+void print_tree(AVL_NODE* root){
+    if (root != NULL){
+        print_tree(root->left);
+        printf("%d ", root->key);
+        print_tree(root->right);
+    }
+    free(root);
+    return;
 }
 
 /* Purpose: Ingests and assigns data from stdin to the tree type specified at command line.
@@ -97,6 +153,13 @@ AVL_NODE* rotate_right(AVL_NODE* c){
 int main(int argc, char** argv){
     if (argc == 2){
         /* Main Program*/
+        //printf("%s\n",*argv[1]);
+        AVL_NODE* root = create_new_node(1);
+        insert(root, 2);
+        //insert(root, 4);
+        //insert(root, 15);
+        print_tree(root);
+        printf("\n");
         return (0);
     }
     else{
