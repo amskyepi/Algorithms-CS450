@@ -1,17 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Purpose: Data structure for each node in an AVL tree
- * int key: unique identifier
+ * char* username: unique identifier
+ * int servers: number of servers user is banned from
  * struct node* left: points to left child
  * struct node* right: points to right child
  * int height: keeps track of the height of node */
 typedef struct node{
-    int key;
+    char* username;
+    int servers;
     struct node* left;
     struct node* right;
     int height;
 }AVL_NODE;
+
+/* Purpose: Simple function that finds the maximum of two values */
+int max(int a, int b){
+    if (a > b)
+        return (a);
+    return(b);
+}
 
 /* Purpose: Calculate Height of given node in AVL tree 
  * AVL_NODE* node: given node
@@ -19,21 +29,17 @@ typedef struct node{
 int height(AVL_NODE* node){
     if (node == NULL)
         return (0);
-    return (node->height);
-}
-
-int max(int a, int b){
-    if (a > b)
-        return (a);
-    return(b);
+    return (1 + max(height(node->left), height(node->right)));
 }
 
 /* Purpose: Create a new node for AVL tree
- * int key: the key assigned to new node
+ * char* username: the username assigned to new node
  * Return: New initialized/malloc'd node */
-AVL_NODE* create_new_node(int key){
+AVL_NODE* create_new_node(char* username){
     AVL_NODE* new_node = (AVL_NODE*) malloc(sizeof(AVL_NODE));
-    new_node->key = key;
+    new_node->username = (char*) malloc(sizeof(username));
+    strcpy(new_node->username, username);
+    new_node->servers = 1;
     new_node->left = new_node->right = NULL;
     new_node->height = 1;
     return(new_node);
@@ -88,20 +94,26 @@ AVL_NODE* rotate_right(AVL_NODE* c){
 
 /* Purpose: Insert node to AVL tree 
  * AVL_NODE* node: Root of tree/subtree
- * int key: Unique identifier of new node
+ * char* username: Unique identifier of new node
  * Return: Updated tree with newly inserted node */
-AVL_NODE* insert(AVL_NODE* node, int key){
+AVL_NODE* insert(AVL_NODE* node, char* username){
     /* If tree/subtree is empty */
     if (node == NULL)
-        return(create_new_node(key));
+        return(create_new_node(username));
+
     /* If key is less than root */
-    if(key < node->key)
-        node->left = insert(node->left, key);
+    if (strcmp(username, node->username) < 0)
+        node->left = insert(node->left, username);
+
     /* If key is greater than root */
-    else if(key > node->key)
-        node->right = insert(node->right, key);
-    else  
+    else if (strcmp(username, node->username) > 0)
+        node->right = insert(node->right, username);
+
+    /* Not a new user, just increase server count */
+    else{
+        node->servers++;
         return (node);
+    }
 
     /* Get height of tree and check balance */
     node->height = max(height(node->left), height(node->right)) + 1;
@@ -109,9 +121,9 @@ AVL_NODE* insert(AVL_NODE* node, int key){
 
     /* Rebalance left side of tree */
     if (node_balance > 1){
-        if (key < node->left->key)
+        if (strcmp(username, node->left->username) < 0)
             return (rotate_right(node));
-        if (key > node->left->key){
+        if (strcmp(username, node->left->username) > 0){
             node->left = rotate_left(node->left);
             return (rotate_right(node));
         }
@@ -119,13 +131,14 @@ AVL_NODE* insert(AVL_NODE* node, int key){
 
     /* Rebalance right side of tree */
     if (node_balance < -1){
-        if (key > node->right->key)
+        if (strcmp(username, node->right->username) < 0)
             return (rotate_left(node));
-        if (key < node->right->key){
+        if (strcmp(username, node->right->username) > 0){
             node->right = rotate_right(node);
             return (rotate_left(node));
         }
     }
+
     return (node);
 }
 
@@ -135,10 +148,11 @@ AVL_NODE* insert(AVL_NODE* node, int key){
 void print_tree(AVL_NODE* root){
     if (root != NULL){
         print_tree(root->left);
-        printf("%d ", root->key);
+        printf("%s: %d ", root->username, root->servers);
+        free(root->username);
         print_tree(root->right);
+        free(root);
     }
-    free(root);
     return;
 }
 
@@ -153,11 +167,11 @@ void print_tree(AVL_NODE* root){
 int main(int argc, char** argv){
     if (argc == 2){
         /* Main Program*/
-        //printf("%s\n",*argv[1]);
-        AVL_NODE* root = create_new_node(1);
-        insert(root, 2);
-        //insert(root, 4);
-        //insert(root, 15);
+        printf("%s\n", argv[1]);
+        AVL_NODE* root = create_new_node("Drew");
+        root = insert(root, "Drew");
+        root = insert(root, "Bob");
+        root = insert(root, "Peter");
         print_tree(root);
         printf("\n");
         return (0);
