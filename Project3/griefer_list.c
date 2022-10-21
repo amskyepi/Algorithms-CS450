@@ -6,9 +6,10 @@
 /* Purpose: Data structure for each node in an AVL tree
  * char* username: unique identifier
  * int servers: number of servers user is banned from
+ * long int recent_ban_time: most recent timestamp from most recent ban
+ * int height: keeps track of the height of node
  * struct node* left: points to left child
- * struct node* right: points to right child
- * int height: keeps track of the height of node */
+ * struct node* right: points to right child */
 typedef struct node{
     char* username;
     int servers;
@@ -38,8 +39,10 @@ int height(AVL_NODE* node){
  * char* username: the username assigned to new node
  * Return: New initialized/malloc'd node */
 AVL_NODE* create_new_node(char* username, long int ban_timestamp){
+    /* Allocate memory for new node */
     AVL_NODE* new_node = (AVL_NODE*) malloc(sizeof(AVL_NODE));
     new_node->username = (char*) malloc(sizeof(char) * strlen(username) + 1);
+    /* Initialize new node */
     strcpy(new_node->username, username);
     new_node->servers = 1;
     new_node->recent_ban_time = ban_timestamp;
@@ -57,24 +60,15 @@ int balance(AVL_NODE* node){
     return(height(node->left) - height(node->right));
 }
 
-/* Purpose: Find minimum value in subtree 
- * AVL_NODE* node: root of subtree
- * Return: smallest node of subtree */
-AVL_NODE* successor_node(AVL_NODE* node){
-    AVL_NODE* current = node;
-    while(current->left != NULL)
-        current = current->left;
-    return (current);
-}
-
 /* Purpose: Make a left rotation on subtree 
  * AVL_NODE* a: root of subtree
  * Return: new root of rotated subtree */
 AVL_NODE* rotate_left(AVL_NODE* a){
     AVL_NODE* b = a->right;
     AVL_NODE* c = b->left;
-    b->left = a;
-    a->right = c;
+    b->left = a; /* a->right->left becomes a */
+    a->right = c; /* a->right becomes a->right->left */
+    /* Recalculate heights */
     a->height = height(a);
     b->height = height(b);
     return (b); /* b is new root */    
@@ -84,10 +78,11 @@ AVL_NODE* rotate_left(AVL_NODE* a){
  * AVL_NODE* c: root of subtree
  * Return: new root of rotated subtree */
 AVL_NODE* rotate_right(AVL_NODE* a){
-    AVL_NODE* b = a->left;
-    AVL_NODE* c = b->right;
-    b->right = a;
-    a->left = c;
+    AVL_NODE* b = a->left; 
+    AVL_NODE* c = b->right; 
+    b->right = a; /* a->left->right becomes a */
+    a->left = c; /* a->left becomes a->left->right */
+    /* Recalculate heights */
     a->height = height(a);
     b->height = height(b);
     return (b); /* b is new root */    
@@ -120,17 +115,11 @@ AVL_NODE* insert(AVL_NODE* node, char* username, long int ban_timestamp){
 
     /* Get height of tree and check balance */
     node->height = height(node);
-    //printf("Height = %d\n", node->height);
     int node_balance = balance(node);
-    //printf("Balance = %d\n", node_balance);
     
     /* LL Rotate */
     if (node_balance > 1 && strcmp(username, node->left->username) < 0)
         return (rotate_right(node));
-
-    /* RR Rotate */
-    if (node_balance < -1 && strcmp(username, node->right->username) > 0)
-        return (rotate_left(node));
 
     /* LR Rotate */
     if (node_balance > 1 && strcmp(username, node->left->username) < 0){
@@ -138,27 +127,46 @@ AVL_NODE* insert(AVL_NODE* node, char* username, long int ban_timestamp){
         return (rotate_right(node));
     }
 
+    /* RR Rotate */
+    if (node_balance < -1 && strcmp(username, node->right->username) > 0)
+        return (rotate_left(node));
+
     /* RL Rotate */
     if (node_balance < -1 && strcmp(username, node->right->username) > 0){
         node->right = rotate_right(node->right);
         return (rotate_left(node));
     }
-
     return (node);
+}
+
+/* Purpose: Search for user in database and print information.
+ * AVL_NODE* node: Root of tree
+ * char* username: Username which we want to search for in tree
+ * Return: Nothing, but will print node contents of given username */
+void search_node(AVL_NODE* node, char* username){
+    if (node == NULL){
+        printf("%s is not currently banned from any servers.\n", username);
+        return;
+    }
+    if (strcmp(username, node->username) < 0)
+        search_node(node->left, username);
+    if (strcmp(username, node->username) > 0)
+        search_node(node->right, username);
+    if (strcmp(username, node->username) == 0){
+        printf("%s was banned from %d servers. most recently on: %ld\n", 
+            node->username, node->servers, node->recent_ban_time);
+        return;
+    }
 }
 
 /* Purpose: Print AVL tree in order 
  * AVL_NODE* root: Root of tree/subtree
  * Return: Nothing, but will print tree contents and free nodes */
-void print_tree(AVL_NODE* root){
+void free_tree(AVL_NODE* root){
     if (root != NULL){
-        print_tree(root->left);
-        printf("%s was banned from %d servers. most recently on: %ld\n", 
-            root->username, 
-            root->servers, 
-            root->recent_ban_time);
+        free_tree(root->left);
         free(root->username);
-        print_tree(root->right);
+        free_tree(root->right);
         free(root);
     }
     return;
@@ -174,8 +182,20 @@ void print_tree(AVL_NODE* root){
  */
 int main(int argc, char** argv){
     if (argc == 3){
+        /* Start timer */
         clock_t start = clock();
+        int user_count = 0;
+        char list_users[20][200];
+
+        /* Ingest usernames from stdin */
+        for (int i = 0; i < 11; i++){
+            if (scanf("%s", list_users[i]) == 1)
+                user_count++;
+        }
+
+        /* Open file to read data into database */
         FILE* file_ptr = fopen(argv[2], "r");
+        /* Error Message */
         if (file_ptr == NULL){
             printf("Could not open file.\n");
             return (-1);
@@ -185,6 +205,7 @@ int main(int argc, char** argv){
             char name[20];
             int server_id;
             long int timestamp;
+
             /* read in root of tree */
             fscanf(file_ptr, "%s %d %ld", name, &server_id, &timestamp);
             AVL_NODE* root = create_new_node(name, timestamp);
@@ -193,11 +214,16 @@ int main(int argc, char** argv){
             while (fscanf(file_ptr, "%s %d %ld", name, &server_id, &timestamp) == 3)
                 root = insert(root, name, timestamp);
 
-            print_tree(root);
+            /* Search for each user in the list and print information stored
+             * in our database (tree) */
+            for (int i = 0; i < user_count; i++)
+                search_node(root, list_users[i]);
+            free_tree(root);
         }
         /* Scapegoat Tree */
         else if (strcmp(argv[1], "scapegoat") == 0){
         }
+        /* End timer and print out time in microseconds */
         clock_t end = clock();
         double cpu_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
         printf("total time in microseconds: %lf\n", cpu_time);
