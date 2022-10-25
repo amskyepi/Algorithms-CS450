@@ -5,39 +5,24 @@
 #include <math.h>
 
 int scape_node_count = 1;
+int alpha_height = 0;
 double log32 = 0.5849625007;
 
-/* Purpose: Data structure for each node in an AVL tree
+/* Purpose: Data structure for each node in a binary search tree
  * char* username: unique identifier
  * int servers: number of servers user is banned from
  * int recent_ban_time: most recent timestamp from most recent ban
- * int height: keeps track of the height of node
  * struct node* left: points to left child
  * struct node* right: points to right child */
-typedef struct avl_node{
+typedef struct bst_node{
     char* username;
     int servers;
     int recent_ban_time;
     int height;
-    struct avl_node* left;
-    struct avl_node* right;
-}AVL_NODE;
-
-/* Purpose: Data structure for each node in a Scapegoat tree
- * char* username: unique identifier
- * int servers: number of servers user is banned from
- * int recent_ban_time: most recent timestamp from most recent ban
- * struct node* left: points to left child
- * struct node* right: points to right child
- * struct node* parent: points to node's parent */
-typedef struct scape_node{
-    char* username;
-    int servers;
-    int recent_ban_time;
-    struct scape_node* left;
-    struct scape_node* right;
-    struct scape_node* parent;
-}SCAPE_NODE;
+    struct bst_node* left;
+    struct bst_node* right;
+    struct bst_node* parent;
+}BST_NODE;
 
 /* Purpose: Simple function that finds the maximum of two values */
 int max(int a, int b){
@@ -47,77 +32,76 @@ int max(int a, int b){
 }
 
 /* Purpose: Calculate Height of given node in AVL tree 
- * AVL_NODE* node: given node
+ * BST_NODE* node: given node
  * Return: height of given node */
-int avl_height(AVL_NODE* node){
+int avl_height(BST_NODE* node){
     if (node == NULL)
         return (0);
-    return (max(avl_height(node->left), avl_height(node->right)) + 1);
+    return (node->height);
 }
 
 /* Purpose: Create a new node for AVL tree
  * char* username: the username assigned to new node
  * int ban_timestamp: the timestamp associated with most recent user ban
  * Return: New initialized/malloc'd node */
-AVL_NODE* create_new_avl_node(char* username, int ban_timestamp){
+BST_NODE* create_new_bst_node(char* username, int ban_timestamp){
     /* Allocate memory for new node */
-    AVL_NODE* new_node = (AVL_NODE*) malloc(sizeof(AVL_NODE));
+    BST_NODE* new_node = (BST_NODE*) malloc(sizeof(BST_NODE));
     new_node->username = (char*) malloc(sizeof(char) * strlen(username) + 1);
+
     /* Initialize new node */
     strcpy(new_node->username, username);
     new_node->servers = 1;
     new_node->recent_ban_time = ban_timestamp;
-    new_node->left = new_node->right = NULL;
     new_node->height = 1;
+    new_node->left = new_node->right = new_node->parent = NULL;
     return(new_node);
 }
 
 /* Purpose: Calculates the balance of avl tree/subtree
- * AVL_NODE* node: root of tree or subtree
+ * BST_NODE* node: root of tree or subtree
  * Return: balance value of tree/subtree */
-int avl_balance(AVL_NODE* node){
+int avl_balance(BST_NODE* node){
     if (node == NULL)
         return (0);
     return(avl_height(node->left) - avl_height(node->right));
 }
 
 /* Purpose: Make a left rotation on subtree 
- * AVL_NODE* a: root of subtree
+ * BST_NODE* a: root of subtree
  * Return: new root of rotated subtree */
-AVL_NODE* avl_rotate_left(AVL_NODE* a){
-    AVL_NODE* b = a->right;
-    AVL_NODE* c = b->left;
+BST_NODE* avl_rotate_left(BST_NODE* a){
+    BST_NODE* b = a->right;
+    BST_NODE* c = b->left;
     b->left = a; /* a->right->left becomes a */
     a->right = c; /* a->right becomes a->right->left */
-    /* Recalculate heights */
-    a->height = avl_height(a);
-    b->height = avl_height(b);
+    a->height = max(avl_height(a->left), avl_height(a->right)) + 1;
+    b->height = max(avl_height(b->left), avl_height(b->right)) + 1;
     return (b); /* b is new root */    
 }
 
 /* Purpose: Make a right rotation on subtree 
- * AVL_NODE* c: root of subtree
+ * BST_NODE* c: root of subtree
  * Return: new root of rotated subtree */
-AVL_NODE* avl_rotate_right(AVL_NODE* a){
-    AVL_NODE* b = a->left; 
-    AVL_NODE* c = b->right; 
+BST_NODE* avl_rotate_right(BST_NODE* a){
+    BST_NODE* b = a->left; 
+    BST_NODE* c = b->right; 
     b->right = a; /* a->left->right becomes a */
     a->left = c; /* a->left becomes a->left->right */
-    /* Recalculate heights */
-    a->height = avl_height(a);
-    b->height = avl_height(b);
+    a->height = max(avl_height(a->left), avl_height(a->right)) + 1;
+    b->height = max(avl_height(b->left), avl_height(b->right)) + 1;
     return (b); /* b is new root */    
 }
 
 /* Purpose: Insert node to AVL tree 
- * AVL_NODE* node: Root of tree/subtree
+ * BST_NODE* node: Root of tree/subtree
  * char* username: Unique identifier of new node
  * int ban_timestamp: the timestamp associated with most recent user ban
  * Return: Updated tree with newly inserted node */
-AVL_NODE* avl_insert(AVL_NODE* node, char* username, int ban_timestamp){
+BST_NODE* avl_insert(BST_NODE* node, char* username, int ban_timestamp){
     /* If tree/subtree is empty */
     if (node == NULL)
-        return(create_new_avl_node(username, ban_timestamp));
+        return(create_new_bst_node(username, ban_timestamp));
 
     /* If key is less than root */
     if (strcmp(username, node->username) < 0)
@@ -127,7 +111,7 @@ AVL_NODE* avl_insert(AVL_NODE* node, char* username, int ban_timestamp){
     else if (strcmp(username, node->username) > 0)
         node->right = avl_insert(node->right, username, ban_timestamp);
 
-    /* Not a new user, just increase server count */
+    /* Not a new user, just increase server count and update timestamp */
     else{
         node->servers++;
         if (ban_timestamp > node->recent_ban_time)
@@ -135,23 +119,23 @@ AVL_NODE* avl_insert(AVL_NODE* node, char* username, int ban_timestamp){
         return (node);
     }
 
-    /* Get height of tree and check balance */
-    node->height = avl_height(node);
+    /* Check balance */
+    node->height = 1 + max(avl_height(node->left),avl_height(node->right));
     int node_balance = avl_balance(node);
     
     /* LL Rotate */
     if (node_balance > 1 && strcmp(username, node->left->username) < 0)
         return (avl_rotate_right(node));
 
+    /* RR Rotate */
+    if (node_balance < -1 && strcmp(username, node->right->username) > 0)
+        return (avl_rotate_left(node));
+
     /* LR Rotate */
     if (node_balance > 1 && strcmp(username, node->left->username) < 0){
         node->left = avl_rotate_left(node->left);
         return (avl_rotate_right(node));
     }
-
-    /* RR Rotate */
-    if (node_balance < -1 && strcmp(username, node->right->username) > 0)
-        return (avl_rotate_left(node));
 
     /* RL Rotate */
     if (node_balance < -1 && strcmp(username, node->right->username) > 0){
@@ -162,10 +146,10 @@ AVL_NODE* avl_insert(AVL_NODE* node, char* username, int ban_timestamp){
 }
 
 /* Purpose: Search for user in database and print information.
- * AVL_NODE* node: Root of tree
+ * BST_NODE* node: Root of tree
  * char* username: Username which we want to search for in tree
  * Return: Nothing, but will print node contents of given username */
-void search_avl(AVL_NODE* node, char* username){
+void search_avl(BST_NODE* node, char* username){
     if (node == NULL){
         printf("%s is not currently banned from any servers.\n", username);
         return;
@@ -175,39 +159,42 @@ void search_avl(AVL_NODE* node, char* username){
     if (strcmp(username, node->username) > 0)
         search_avl(node->right, username);
     if (strcmp(username, node->username) == 0){
-        printf("%s was banned from %d servers. most recently on: %ld\n", 
+        printf("%s was banned from %d servers. most recently on: %d\n", 
             node->username, node->servers, node->recent_ban_time);
         return;
     }
 }
 
-/* Purpose: Print AVL tree in order 
- * AVL_NODE* root: Root of tree/subtree
- * Return: Nothing, but will print tree contents and free nodes */
-void free_avl_tree(AVL_NODE* root){
+/* Purpose: Free tree from memory
+ * BST_NODE* root: Root of tree/subtree
+ * Return: Nothing, but will free tree contents */
+void free_tree(BST_NODE* root){
     if (root != NULL){
-        free_avl_tree(root->left);
+        free_tree(root->left);
         free(root->username);
-        free_avl_tree(root->right);
+        free_tree(root->right);
         free(root);
     }
     return;
 }
 
-/* Purpose: Create a new node for Scapegoat tree
- * char* username: the username assigned to new node
- * int ban_timestamp: the timestamp associated with most recent user ban
- * Return: New initialized/malloc'd node */
-SCAPE_NODE* create_new_scape_node(char* username, int ban_timestamp){
-    /* Allocate memory for new node */
-    SCAPE_NODE* new_node = (SCAPE_NODE*) malloc(sizeof(SCAPE_NODE));
-    new_node->username = (char*) malloc(sizeof(char) * strlen(username) + 1);
-    /* Initialize new node */
-    strcpy(new_node->username, username);
-    new_node->servers = 1;
-    new_node->recent_ban_time = ban_timestamp;
-    new_node->left = new_node->right = NULL;
-    return(new_node);
+/* Purpose: Calculates the size of the given subtree
+ * BST_NODE* node: root of subtree which we would like to calculate size
+ * return: the size of subtree */
+int scape_size(BST_NODE* node){
+    if (node == NULL)
+        return (0);
+    return (scape_size(node->left) + scape_size(node->right) + 1);
+}
+
+/* Purpose: Determines whether the difference between the height of it's left
+ * and right subtrees is lesser than or equal to 1.
+ * BST_NODE* node: root of subtree which we want to know is balanced
+ * return: 1 if conditions are true, 0 if false */
+int isBalanced(BST_NODE* node){
+    if (abs(scape_size(node->left) - scape_size(node->right)) <= 1)
+        return (1);
+    return (0);
 }
 
 /* Purpose: Insert node to scapegoat tree 
@@ -215,20 +202,24 @@ SCAPE_NODE* create_new_scape_node(char* username, int ban_timestamp){
  * char* username: Unique identifier of new node
  * int ban_timestamp: the timestamp associated with most recent user ban
  * Return: Updated tree with newly inserted node */
-SCAPE_NODE* scape_insert(SCAPE_NODE* root, char* username, int ban_timestamp){
-    /* If tree/subtree is empty */
+BST_NODE* scape_insert(BST_NODE* root, char* username, int ban_timestamp){
+    /* Add new scape_node */
     if (root == NULL){
         scape_node_count++;
-        return(create_new_scape_node(username, ban_timestamp));
+        return(create_new_bst_node(username, ban_timestamp));
     }
 
     /* If key is less than root */
-    if (strcmp(username, root->username) < 0)
+    if (strcmp(username, root->username) < 0){
+        root->parent = root;
         root->left = scape_insert(root->left, username, ban_timestamp);
+    }
 
     /* If key is greater than root */
-    else if (strcmp(username, root->username) > 0)
+    else if (strcmp(username, root->username) > 0){
+        root->parent = root;
         root->right = scape_insert(root->right, username, ban_timestamp);
+    }
 
     /* Not a new user, just increase server count */
     else{
@@ -237,7 +228,6 @@ SCAPE_NODE* scape_insert(SCAPE_NODE* root, char* username, int ban_timestamp){
             root->recent_ban_time = ban_timestamp;
         return (root);
     }
-    
 }
 
 /* Purpose: Ingests and assigns data from stdin to the tree type specified at command line.
@@ -253,10 +243,10 @@ int main(int argc, char** argv){
         /* Start timer */
         clock_t start = clock();
         int user_count = 0;
-        char list_users[20][200];
+        char list_users[110000][30];
 
         /* Ingest usernames from stdin */
-        for (int i = 0; i < 11; i++){
+        for (int i = 0; i < 110000; i++){
             if (scanf("%s", list_users[i]) == 1)
                 user_count++;
         }
@@ -274,31 +264,34 @@ int main(int argc, char** argv){
         /* AVL Tree */
         if (strcmp(argv[1], "avl") == 0){
             /* read in root of tree */
-            fscanf(file_ptr, "%s %d %ld", name, &server_id, &timestamp);
-            AVL_NODE* root = create_new_avl_node(name, timestamp);
+            fscanf(file_ptr, "%s %d %d", name, &server_id, &timestamp);
+            BST_NODE* root = create_new_bst_node(name, timestamp);
             
             /* read in remaining data */
-            while (fscanf(file_ptr, "%s %d %ld", name, &server_id, &timestamp) == 3)
+            while (fscanf(file_ptr, "%s %d %d", name, &server_id, &timestamp) == 3){
                 root = avl_insert(root, name, timestamp);
+            }
 
             /* Search for each user in the list and print information stored
              * in our database (tree) */
             for (int i = 0; i < user_count; i++)
                 search_avl(root, list_users[i]);
-            free_avl_tree(root);
+            free_tree(root);
         }
         /* Scapegoat Tree */
         else if (strcmp(argv[1], "scapegoat") == 0){
             /* read in root of tree */
-            fscanf(file_ptr, "%s %d %ld", name, &server_id, &timestamp);
-            SCAPE_NODE* root = create_new_scape_node(name, timestamp);
+            fscanf(file_ptr, "%s %d %d", name, &server_id, &timestamp);
+            BST_NODE* root = create_new_bst_node(name, timestamp);
             
             /* read in remaining data */
-            while (fscanf(file_ptr, "%s %d %ld", name, &server_id, &timestamp) == 3)
-                root = scape_insert(root, name, timestamp);
+            while (fscanf(file_ptr, "%s %d %d", name, &server_id, &timestamp) == 3){
+                scape_insert(root, name, timestamp);
+            }
 
-            printf("There are %d nodes\n", scape_node_count);
-            printf("Alpha height = %d\n", (int)(log2(scape_node_count)/log32));
+            for (int i = 0; i < user_count; i++)
+                search_avl(root, list_users[i]);
+            free_tree(root);
         }
         /* End timer and print out time in microseconds */
         clock_t end = clock();
