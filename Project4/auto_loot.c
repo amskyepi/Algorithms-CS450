@@ -2,49 +2,52 @@
 #include <string.h>
 #include <stdlib.h>
 
-//definition for data structure handling item data
-struct item{
+/* Purpose: structure for holding information associated with loot item
+ * int weight: weight of item
+ * int value: value of item
+ * char *name: name of item */
+typedef struct item{
   int weight;
   int value;
   char *name;
-};
+}ITEM;
 
-//deinition for data structure handling maxVal function
-struct answer{
+typedef struct answer{
   unsigned char items[128];
   int maxVal;
-};
+}ANSWER;
 
-int itemCount; //serves as the number of items within data file
-struct answer cache[1200]; //cache for maxVal function
-struct item items[128];
+int itemCount;
+ANSWER cache[1200];
+ITEM items[128];
 
-
-struct answer maxVal(int capacity){
-  if(cache[capacity].maxVal != 0){ //base case
+ANSWER maxVal(int capacity){
+  /* Base Case */
+  if(cache[capacity].maxVal != 0){ 
     return(cache[capacity]);
   } 
-  struct answer max = {0}; //struct used to return max value
+  ANSWER max = {0};
   max.maxVal = 0;
-    if(capacity <= 0){ //upon reaching capacity
+    if(capacity <= 0){
       cache[capacity] = max;
-      return(max); //return max value
+      return(max);
     }
-    for(int i = 0; i < itemCount; i++){ //checking all items
-        if(items[i].weight <= capacity){ /* if items weight is less than capacity, continue */
-            struct answer temp = maxVal(capacity - items[i].weight); /* recursive maxVal call */
-            /* if item is considered for knapsack */
-            if (temp.maxVal + items[i].value > max.maxVal){
-                max=temp;
-                max.maxVal = temp.maxVal + items[i].value;
-                max.items[i]++;
-            }
+    for(int i = 0; i < itemCount; i++){
+    /* if items weight is less than capacity, continue */
+      if(items[i].weight <= capacity){ 
+        /* recursive maxVal call */
+        ANSWER temp = maxVal(capacity - items[i].weight); 
+        /* if item is considered for knapsack */
+        if (temp.maxVal + items[i].value > max.maxVal){
+          max = temp;
+          max.maxVal = temp.maxVal + items[i].value;
+          max.items[i]++;
         }
+      }
     }
     cache[capacity] = max;
     return (max);
 }
-
 
 int main(int argc, char *argv[]){
     int capacity, weight, value;
@@ -57,19 +60,19 @@ int main(int argc, char *argv[]){
 
     /* Parse input */
     while (fgets(buffer, 200, stdin) != NULL){
-    sscanf(buffer, "%[^;];%d;%d", name, &value, &weight);
-        items[itemCount].name = malloc(sizeof(char) *strlen(name));
-        strcpy(items[itemCount].name, name);
-        items[itemCount].value = value;
-        items[itemCount].weight = weight; 
-        itemCount++;
+    sscanf(buffer, "%[^;];%d;%d", name, &weight, &value);
+      items[itemCount].name = malloc(sizeof(char) *strlen(name));
+      strcpy(items[itemCount].name, name);
+      items[itemCount].weight = weight;
+      items[itemCount].value = value;
+      itemCount++;
     }
-    struct answer highV = maxVal(capacity);
+    ANSWER highV = maxVal(capacity);
     int max = highV.maxVal; 
     printf("Highest possible value=%d\n",max); 
-    for (int c = 0; c < itemCount; c++){ 
-        if (highV.items[c] != 0){
-            printf("Item %d (%s): %d\n",c,items[c].name,highV.items[c]);
-        }
+    for (int i = 0; i < itemCount; i++){ 
+      if (highV.items[i] != 0){
+        printf("Item %d (%s): %d\n",i,items[i].name,highV.items[i]);
+      }
     }
 }
