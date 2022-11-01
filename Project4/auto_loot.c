@@ -27,6 +27,12 @@ int max(int a, int b){
     return(b);
 }
 
+/* Purpose: Using an iterative approach, we find the best combination of items
+ * to keep in players inventory.
+ * int capacity: capacity of bag
+ * int item_count: number of items to choose from
+ * return: Nothing, but prints contents of optimal knapsack, final weight
+ * and final value. */
 void auto_loot(int capacity, int item_count){
   int knapsack[item_count + 1][capacity + 1];
   int best_item_count = 0;
@@ -47,7 +53,6 @@ void auto_loot(int capacity, int item_count){
     }
   }
 
-  /* Store results in an array */
   int max_value = knapsack[item_count][capacity],
       max_cap = capacity, 
       final_weight = 0, 
@@ -55,6 +60,7 @@ void auto_loot(int capacity, int item_count){
   ITEM final_knapsack_contents[best_item_count];
   int knap_count = 0;
   
+  /* Store results in an array */
   for (int i = item_count; i > 0 && max_value > 0; i--){
     if (max_value == knapsack[i - 1][max_cap])
       continue;
@@ -80,7 +86,12 @@ void auto_loot(int capacity, int item_count){
   return;
 }
 
-int main(int argc, char *argv[]){
+/* Purpose: Reads input from stdin, and uses auto_loot function to print
+ * contents of the most optimal loot based on the players current capacity.
+ * int argc: number of command line arguments provided by user
+ * char* argv[]: command line arguments provided
+ * return: 0 on success */
+int main(int argc, char* argv[]){
     int capacity, weight, value;
     char buffer[200], name[128];
     int itemCount = 0;
@@ -93,7 +104,7 @@ int main(int argc, char *argv[]){
     /* Parse input */
     while (fgets(buffer, 200, stdin) != NULL){
     sscanf(buffer, "%[^;];%d;%d", name, &weight, &value);
-      items[itemCount].name = malloc(sizeof(char) * strlen(name));
+      items[itemCount].name = malloc(sizeof(char) * strlen(name) + 1);
       strcpy(items[itemCount].name, name);
       items[itemCount].weight = weight;
       items[itemCount].value = value;
@@ -103,4 +114,8 @@ int main(int argc, char *argv[]){
     clock_t end = clock();
     double total_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
     printf("time taken in microseconds: %lf\n", total_time);
+
+    for (int i = 0; i < itemCount; i++)
+      free(items[i].name);
+    return(0);
 }
