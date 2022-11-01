@@ -36,7 +36,7 @@ def read_input():
 # along with the final weight and value of bag
 def auto_loot(capacity, name, weight, value):
     n_items = len(value)
-    # table of combinations
+    # Table for all combinations
     sack = [[0 for i in range(capacity + 1)]
             for j in range(n_items + 1)]
              
@@ -55,15 +55,16 @@ def auto_loot(capacity, name, weight, value):
     final_weight = 0
     j = capacity
     
+    # Search for ideal items
     for i in range(n_items, 0, -1):
         if final_value <= 0:
             break
 
         if final_value == sack[i - 1][j]:
             continue
+        
+        # Include this item in sack
         else:
- 
-            # This item is included in the bag
             items_list.append(name[i - 1] + ", " + str(weight[i - 1]) + ", " + str(value[i - 1]))
             final_weight += weight[i - 1]
             final_value -= value[i - 1]
@@ -75,7 +76,7 @@ def auto_loot(capacity, name, weight, value):
     print("final weight:", final_weight)
     final_value = sack[n_items][capacity]
     print("final value:",final_value)
-   
+
 begin = time.time() 
 capacity, name_list, weight_list, value_list = read_input()
 auto_loot(capacity, name_list, weight_list, value_list)
