@@ -1,3 +1,8 @@
+/* Language: C
+ * Project 4: Auto-loot
+ * CS 450 
+ * Author: Amethyst Skye */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

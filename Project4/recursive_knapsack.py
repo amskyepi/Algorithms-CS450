@@ -1,4 +1,4 @@
-# Python
+# Language: Python
 # Project 4: Auto-loot (recursive)
 # CS 450 
 # Author: Amethyst Skye
