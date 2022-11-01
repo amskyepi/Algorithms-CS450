@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 /* Purpose: structure for holding information associated with loot item
  * int weight: weight of item
@@ -12,67 +13,89 @@ typedef struct item{
   char *name;
 }ITEM;
 
-typedef struct answer{
-  unsigned char items[128];
-  int maxVal;
-}ANSWER;
-
-int itemCount;
-ANSWER cache[1200];
 ITEM items[128];
 
-ANSWER maxVal(int capacity){
-  /* Base Case */
-  if(cache[capacity].maxVal != 0){ 
-    return(cache[capacity]);
-  } 
-  ANSWER max = {0};
-  max.maxVal = 0;
-    if(capacity <= 0){
-      cache[capacity] = max;
-      return(max);
-    }
-    for(int i = 0; i < itemCount; i++){
-    /* if items weight is less than capacity, continue */
-      if(items[i].weight <= capacity){ 
-        /* recursive maxVal call */
-        ANSWER temp = maxVal(capacity - items[i].weight); 
-        /* if item is considered for knapsack */
-        if (temp.maxVal + items[i].value > max.maxVal){
-          max = temp;
-          max.maxVal = temp.maxVal + items[i].value;
-          max.items[i]++;
-        }
+/* Purpose: Simple function that finds the maximum of two values */
+int max(int a, int b){
+    if (a > b)
+        return (a);
+    return(b);
+}
+
+void auto_loot(int capacity, int item_count){
+  int knapsack[item_count + 1][capacity + 1];
+  int best_item_count = 0;
+
+  /* Build table with potential knapsack contents */
+  for (int i = 0; i < item_count + 1; i++){
+    for (int j = 0; j < capacity + 1; j++){
+      if (i == 0 || j == 0)
+        knapsack[i][j] = 0;
+      else if (items[i - 1].weight <= j)
+        knapsack[i][j] = max(items[i - 1].value + 
+          knapsack[i - 1][j - items[i - 1].weight], 
+          knapsack[i - 1][j]);
+      else{
+        knapsack[i][j] = knapsack[i - 1][j];
+        best_item_count++;
       }
     }
-    cache[capacity] = max;
-    return (max);
+  }
+
+  /* Store results in an array */
+  int max_value = knapsack[item_count][capacity],
+      max_cap = capacity, 
+      final_weight = 0, 
+      final_value = knapsack[item_count][capacity];
+  ITEM final_knapsack_contents[best_item_count];
+  int knap_count = 0;
+  
+  for (int i = item_count; i > 0 && max_value > 0; i--){
+    if (max_value == knapsack[i - 1][max_cap])
+      continue;
+    else{
+      final_knapsack_contents[knap_count].name = items[i - 1].name;
+      final_knapsack_contents[knap_count].weight = items[i - 1].weight;
+      final_knapsack_contents[knap_count].value = items[i - 1].value;
+      knap_count++;
+      
+      max_cap -= items[i - 1].weight;
+      max_value -= items[i - 1].value;
+      final_weight += items[i - 1].weight;
+    }
+  }
+  for (int i = knap_count; i > 0; i--){
+    printf("%s, %d, %d\n", 
+            final_knapsack_contents[i - 1].name,
+            final_knapsack_contents[i - 1].weight,
+            final_knapsack_contents[i - 1].value);
+  }
+  printf("final weight: %d\n", final_weight);
+  printf("final value: %d\n", final_value);
+  return;
 }
 
 int main(int argc, char *argv[]){
     int capacity, weight, value;
     char buffer[200], name[128];
-    itemCount = 0;
+    int itemCount = 0;
 
     /* Get bag capacity */
+    clock_t start = clock();
     fgets(buffer, 200, stdin);
     sscanf(buffer,"%d", &capacity);
 
     /* Parse input */
     while (fgets(buffer, 200, stdin) != NULL){
     sscanf(buffer, "%[^;];%d;%d", name, &weight, &value);
-      items[itemCount].name = malloc(sizeof(char) *strlen(name));
+      items[itemCount].name = malloc(sizeof(char) * strlen(name));
       strcpy(items[itemCount].name, name);
       items[itemCount].weight = weight;
       items[itemCount].value = value;
       itemCount++;
     }
-    ANSWER highV = maxVal(capacity);
-    int max = highV.maxVal; 
-    printf("Highest possible value=%d\n",max); 
-    for (int i = 0; i < itemCount; i++){ 
-      if (highV.items[i] != 0){
-        printf("Item %d (%s): %d\n",i,items[i].name,highV.items[i]);
-      }
-    }
+    auto_loot(capacity, itemCount);
+    clock_t end = clock();
+    double total_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
+    printf("time taken in microseconds: %lf\n", total_time);
 }
