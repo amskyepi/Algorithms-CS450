@@ -37,7 +37,7 @@ void auto_loot(int capacity, int item_count){
   int knapsack[item_count + 1][capacity + 1];
   int best_item_count = 0;
 
-  /* Build table with potential knapsack contents */
+  /* Build table with potential combinations of knapsack contents */
   for (int i = 0; i < item_count + 1; i++){
     for (int j = 0; j < capacity + 1; j++){
       if (i == 0 || j == 0)
@@ -75,6 +75,7 @@ void auto_loot(int capacity, int item_count){
       final_weight += items[i - 1].weight;
     }
   }
+  /* Print loot contents in our bag */
   for (int i = knap_count; i > 0; i--){
     printf("%s, %d, %d\n", 
             final_knapsack_contents[i - 1].name,
@@ -110,11 +111,13 @@ int main(int argc, char* argv[]){
       items[itemCount].value = value;
       itemCount++;
     }
+    /* Run auto_loot function and print time in microseconds */
     auto_loot(capacity, itemCount);
     clock_t end = clock();
     double total_time = (((double) (end - start)) / CLOCKS_PER_SEC) * 1000000;
     printf("time taken in microseconds: %lf\n", total_time);
 
+    /* Free all allocated memory */
     for (int i = 0; i < itemCount; i++)
       free(items[i].name);
     return(0);
