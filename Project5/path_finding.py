@@ -1,3 +1,5 @@
+import sys
+
 def print_grid(grid):
     for i in grid:
         for j in i:
@@ -26,9 +28,10 @@ def main():
     '2': 'T', # Target character
     '3': 'E'} # Enemy character
 
-    grid_data = file_to_grid('data/sample_input.txt')
+    grid_data = [map(str, row.split()) for row in sys.stdin]
     grid_data = replace_values(grid_data, cost_dict)
     print_grid(grid_data)
+    
     return
 
 if __name__ == "__main__":
