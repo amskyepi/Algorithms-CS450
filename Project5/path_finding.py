@@ -126,7 +126,6 @@ def get_neighbors(node):
 def dijkstra(src, dest):
     src_key = val_list.index(src)
     dest_key = val_list.index(dest)
-    #print(src_key, "->", dest_key)
     
     visited = []
     shortest_path = {v:INF for v in range(m_dim * n_dim)}
@@ -134,13 +133,16 @@ def dijkstra(src, dest):
     pred = {v:() for v in range(m_dim * n_dim)}
     queue = []
     queue.append((0, src_key))
+
     while queue != None:
+        # get tile with smallest cost
+        heapq.heapify(queue)
         cost, current = heapq.heappop(queue)
         if current == dest_key:
             return(shortest_path, pred)
         visited.append(current)
-        
         neighbors = get_neighbors(current) # <- [neighbor_key, cost_scalar]
+        
         for key, scalar in neighbors:
             neighbor_cost = cost + (cost_dict[value_dict[key]] * scalar)
             if neighbor_cost < shortest_path[key]:
