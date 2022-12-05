@@ -56,9 +56,9 @@ def dijkstra(grid, src, dest):
     m_dim = len(grid)
     n_dim = len(grid[0])
     visited = set()
-    shortest_path = [[inf for v in range(m_dim)] for v in range(n_dim)]
+    shortest_path = [[inf for v in range(n_dim)] for v in range(m_dim)]
     shortest_path[src[0]][src[1]] = 0
-    pred = [[() for v in range(m_dim)] for v in range(n_dim)]
+    pred = [[() for v in range(n_dim)] for v in range(m_dim)]
     queue = []
     heapq.heappush(queue, (0, src))
 
@@ -101,14 +101,14 @@ def get_results(grid, src, dest, shortest_path, pred):
     while tile != src:
         path.append(tile)
         tile = pred[tile[0]][tile[1]]
-    path.reverse()
+    #path.reverse()
     for x, y in enumerate(path):
         new_grid[y[0]][y[1]] = '*'
     total_cost = shortest_path[dest[0]][dest[1]]
     return (new_grid, total_cost)
 
 def main():
-    begin = time.time() 
+    begin = time.time()
     grid_data = np.loadtxt(sys.stdin, dtype=np.str_)
     src = find_item(grid_data, '0')
     dest = find_item(grid_data, '2')
